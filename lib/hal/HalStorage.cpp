@@ -4,13 +4,15 @@
 #include <FS.h>  // need to be included before SdFat.h for compatibility with FS.h's File class
 #include <BoardT5S3.h>
 #include <Logging.h>
-#include <SdFat.h>
+#include <SDCardManager.h>  // FreeInk SDK: SdFat-over-SPI SD; pulls SdFat (FsFile)
 
 #include <cassert>
 
 namespace {
-constexpr uint32_t SD_SPI_FREQUENCY = 40000000;
-SdFat sd;
+// Drive the SD through the SDK's SDCardManager (SPI pins come from
+// BoardConfig::ACTIVE.sd). It exposes the same open/exists/remove/... surface, so
+// the file ops below are unchanged.
+SDCardManager& sd = SDCardManager::getInstance();
 
 bool openFileForReadUnlocked(const char* moduleName, const char* path, FsFile& file) {
   if (!sd.exists(path)) {
@@ -80,7 +82,7 @@ HalStorage::HalStorage() {
 
 bool HalStorage::begin() {
   BoardT5S3::prepareSdBus();
-  initialized = sd.begin(T5S3_SD_CS, SD_SPI_FREQUENCY);
+  initialized = sd.begin();  // SPI pins (CS12/SCLK14/MISO21/MOSI13) from the profile
   if (initialized) {
     LOG_INF("SD", "SD card detected");
   } else {

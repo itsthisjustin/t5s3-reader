@@ -1,5 +1,6 @@
 #include "HalPowerManager.h"
 
+#include <BatteryMonitor.h>  // FreeInk SDK: BQ27220 I2C gauge backend
 #include <WiFi.h>
 
 #include <cassert>
@@ -53,13 +54,16 @@ uint16_t HalPowerManager::getBatteryPercentage() const {
     return _batteryCachedPercent;
   }
 
+  // SoC comes from the SDK's BatteryMonitor (BQ27220 I2C gauge, configured from
+  // BoardConfig::ACTIVE.batteryGauge). A failed read keeps the last good value.
+  static const BatteryMonitor battery(0);  // ADC pin unused in gauge mode
   uint16_t soc = 0;
-  if (!BoardT5S3::readBatteryStateOfCharge(&soc)) {
+  if (!battery.readPercentageChecked(soc)) {
     _batteryLastPollMs = now;
     return _batteryCachedPercent;
   }
 
-  _batteryCachedPercent = soc > 100 ? 100 : soc;
+  _batteryCachedPercent = soc;  // already clamped to 0-100
   _batteryLastPollMs = now;
   return _batteryCachedPercent;
 }
