@@ -1,6 +1,7 @@
 #include <HalGPIO.h>
 
 #include <Logging.h>
+#include <PowerManager.h>  // FreeInk SDK: SoC-correct deep-sleep wake + sleep
 #include <esp_sleep.h>
 
 // Global HalGPIO instance
@@ -170,13 +171,10 @@ void HalGPIO::startDeepSleep(bool wakeOnTouch) {
   pinMode(T5S3_TOUCH_INT, INPUT_PULLUP);
   const uint64_t wakeMask = wakeOnTouch ? (POWER_WAKE_MASK | TOUCH_WAKE_MASK) : POWER_WAKE_MASK;
   LOG_DBG("GPIO", "Entering deep sleep, wakeOnTouch=%d", wakeOnTouch ? 1 : 0);
-#if SOC_GPIO_SUPPORT_DEEPSLEEP_WAKEUP
-  esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-  esp_deep_sleep_enable_gpio_wakeup(wakeMask, ESP_GPIO_WAKEUP_GPIO_LOW);
-#else
-  esp_sleep_enable_ext1_wakeup(wakeMask, ESP_EXT1_WAKEUP_ANY_LOW);
-#endif
-  esp_deep_sleep_start();
+  // SoC-correct wake (ext1 on S3, gpio on RISC-V) lives in the SDK; both wake pins
+  // (BOOT button, touch INT) are active-low.
+  freeink::PowerManager::armWakeOnPins(wakeMask, /*wakeLow=*/true);
+  freeink::PowerManager::deepSleep();
 }
 
 void HalGPIO::verifyPowerButtonWakeup(uint16_t requiredDurationMs, bool shortPressAllowed) {
