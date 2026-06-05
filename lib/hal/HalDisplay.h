@@ -2,16 +2,9 @@
 #include <Arduino.h>
 #include <BoardT5S3.h>
 
-class T5S3M5GfxDisplay;
-
-namespace lgfx {
-inline namespace v1 {
-class LGFX_Sprite;
-namespace epd_mode {
-enum epd_mode_t : uint8_t;
-}
-}
-}  // namespace lgfx
+// HalDisplay now delegates to the FreeInk SDK's EInkDisplay (LgfxEpdDriver), so
+// the app's display API is unchanged while the SDK drives the panel. The board's
+// LgfxEpdConfig (pins + PCA9535/TPS65185 power hooks) is in FreeInkLgfxConfig.cpp.
 
 class HalDisplay {
  public:
@@ -86,27 +79,9 @@ class HalDisplay {
   uint32_t getBufferSize() const;
 
  private:
-  T5S3M5GfxDisplay* gfx = nullptr;
-  lgfx::LGFX_Sprite* panelCanvas = nullptr;
-  uint8_t* frameBuffer = nullptr;
-  uint8_t* grayscaleLsbBuffer = nullptr;
-  uint8_t* grayscaleMsbBuffer = nullptr;
-  uint8_t* grayscaleBaseBuffer = nullptr;
-  bool grayscaleBaseCaptured = false;
   bool displayReady = false;
-  bool forceFullRefresh = true;
   bool forcedRefreshPending = false;
   RefreshMode forcedRefreshMode = RefreshMode::HALF_REFRESH;
-  DisplayEffect pendingDisplayEffect = DisplayEffect::EFFECT_NONE;
-  uint32_t refreshCycleCount = 0;
-
-  uint8_t* allocatePlane();
-  void releaseBackend();
-  bool initializePanelCanvas();
-  void pushPanelCanvas(RefreshMode mode, lgfx::epd_mode::epd_mode_t epdMode);
-  void pushPanelCanvasWithEffect(DisplayEffect effect) const;
-  void renderBwToPanelCanvas() const;
-  void renderGrayToPanelCanvas() const;
 };
 
 extern HalDisplay display;

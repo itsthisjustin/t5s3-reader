@@ -13,6 +13,12 @@
 //
 // The PCA9535/TPS65185 power sequence is ported from the standalone HalDisplay's
 // T5S3BusEPD so behavior matches the validated port.
+//
+// This whole file is inert until the FreeInk SDK is on the include path (the
+// __has_include guard below), so it can sit in the tree without affecting the
+// current standalone build. It activates once you add the SDK libs + flags above.
+
+#if __has_include(<LgfxEpdDriver.h>)
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -163,3 +169,5 @@ const LgfxEpdConfig& lilygoT5S3LgfxConfig() {
 }
 
 }  // namespace freeink
+
+#endif  // __has_include(<LgfxEpdDriver.h>)
